@@ -10,7 +10,7 @@ longPoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
 conn = sqlite3.connect(config.sqlite_path)
 c = conn.cursor()
-
+t = False
 
 def get_user(user_id):
     cmd = "SELECT * FROM users WHERE user_id=%d" % user_id
@@ -43,9 +43,11 @@ while True:
                     message='ты хочешь биологию?\n Напиши "Да", если реально хочешь))/',
                     random_id=random.randint(-1000000000, 1000000000)
                 )
-            if event.text.lower() == "да":
+                t = True
+
+            if event.text.lower() == "да" and t:
                 vk.messages.send(  # Отправляем сообщение
                     user_id=event.user_id,
-                    message='вопрос/',
+                    message='Ты Пидр?',
                     random_id=random.randint(-1000000000, 1000000000)
                 )
