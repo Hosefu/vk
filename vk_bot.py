@@ -52,3 +52,4 @@ while True:
                     message='Ты Пидр?',
                     random_id=random.randint(-1000000000, 1000000000)
                 )
+                t = False
