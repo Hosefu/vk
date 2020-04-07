@@ -6,11 +6,8 @@ import random
 import config
 
 vk_session = vk_api.VkApi(token=config.token)
-
-longpoll = VkLongPoll(vk_session)
-
+longPoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
-
 conn = sqlite3.connect(config.sqlite_path)
 c = conn.cursor()
 
@@ -28,11 +25,9 @@ def register_new_user(user_id):
     conn.commit()
 
 
-
 while True:
-    for event in longpoll.listen():
+    for event in longPoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-
             if get_user(user_id=event.user_id) is None:
                 register_new_user(user_id=event.user_id)
 
