@@ -44,6 +44,7 @@ while True:
                 #     message="Это Питон, детка!",
                 #     random_id=random.randint(-1000000000, 1000000000)
                 # )
+                
             if event.text.lower() == "био":
 
 
