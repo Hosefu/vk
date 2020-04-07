@@ -43,8 +43,9 @@ while True:
                     message='ты хочешь биологию?\n Напиши "Да", если реально хочешь))/',
                     random_id=random.randint(-1000000000, 1000000000)
                 )
-                event = longPoll.listen()
             if event.text.lower() == "да":
-                user_id = event.user_id,
-                message = 'вопрос/',
-                random_id = random.randint(-1000000000, 1000000000)
+                vk.messages.send(  # Отправляем сообщение
+                    user_id=event.user_id,
+                    message='вопрос/',
+                    random_id=random.randint(-1000000000, 1000000000)
+                )
