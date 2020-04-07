@@ -24,6 +24,7 @@ def register_new_user(user_id):
     c.execute(cmd)
     conn.commit()
 
+
 while True:
     for event in longPoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
