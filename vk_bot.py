@@ -44,8 +44,10 @@ while True:
                     random_id=random.randint(-1000000000, 1000000000)
                 )
                 event = longPoll.listen()
-                if event.text.lower() == "да":
-                    user_id = event.user_id,
-                    message = 'вопрос/',
-                    random_id = random.randint(-1000000000, 1000000000)
-                   
+                for event1 in longPoll.listen():
+                    if event.text.lower() == "да":
+                        vk.messages.send(  # Отправляем сообщение
+                            user_id = event.user_id,
+                            message = 'вопрос',
+                            random_id = random.randint(-1000000000, 1000000000)
+                        )
