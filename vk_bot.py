@@ -12,6 +12,7 @@ conn = sqlite3.connect(config.sqlite_path)
 c = conn.cursor()
 t = False
 
+
 def get_user(user_id):
     cmd = "SELECT * FROM users WHERE user_id=%d" % user_id
     c.execute(cmd)
