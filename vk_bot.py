@@ -20,10 +20,15 @@ def get_user(user_id):
     return result
 
 
+def write_msg(user_id, message):
+    vk.method('messages.send', {'user_id': user_id, 'message': message})
+
+
 def register_new_user(user_id):
     cmd = "INSERT INTO users(user_id, state) VALUES (%d, '')" % user_id
     c.execute(cmd)
     conn.commit()
+
 
 
 while True:
@@ -33,12 +38,15 @@ while True:
                 register_new_user(user_id=event.user_id)
 
             if event.text.lower() == "привет":
-                vk.messages.send(  # Отправляем сообщение
-                    user_id=event.user_id,
-                    message="Это Питон, детка!",
-                    random_id=random.randint(-1000000000, 1000000000)
-                )
+                write_msg(event.user_id, message= "Это Питон, детка!")
+                # vk.messages.send(  # Отправляем сообщение
+                #     user_id=event.user_id,
+                #     message="Это Питон, детка!",
+                #     random_id=random.randint(-1000000000, 1000000000)
+                # )
             if event.text.lower() == "био":
+
+
                 vk.messages.send(  # Отправляем сообщение
                     user_id=event.user_id,
                     message='ты хочешь биологию?\n Напиши "Да", если реально хочешь))/',
