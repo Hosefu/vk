@@ -44,8 +44,7 @@ while True:
                     random_id=random.randint(-1000000000, 1000000000)
                 )
                 event = longPoll.listen()
-                if event.text.lower() == "да":
-                    user_id = event.user_id,
-                    message = 'вопрос/',
-                    random_id = random.randint(-1000000000, 1000000000)
-                   
+            if event.text.lower() == "да":
+                user_id = event.user_id,
+                message = 'вопрос/',
+                random_id = random.randint(-1000000000, 1000000000)
