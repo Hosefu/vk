@@ -1,4 +1,3 @@
-
 default = '''
 {"buttons":[],"one_time":true}
 '''
@@ -16,26 +15,26 @@ exercise = '''
       "color": "secondary"
     }],
     [{
-        "action": {
-          "type": "text",
-          "label": "%s"
-        },
-        "color": "secondary"
-      }
-    {
       "action": {
         "type": "text",
         "label": "%s"
       },
       "color": "secondary"
-    },
-      {
-        "action": {
-          "type": "text",
-          "label": "%s"
-        },
-        "color": "secondary"
-      }]
+    }],
+    [{
+      "action": {
+        "type": "text",
+        "label": "%s"
+      },
+      "color": "secondary"
+    }],
+    [{
+      "action": {
+        "type": "text",
+        "label": "%s"
+      },
+      "color": "secondary"
+    }]
   ]
 }
 '''
