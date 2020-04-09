@@ -4,6 +4,7 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 import sqlite3
 import random
 import config
+import keyboard
 
 vk_session = vk_api.VkApi(token=config.token)
 longPoll = VkLongPoll(vk_session)
@@ -12,6 +13,8 @@ conn = sqlite3.connect(config.sqlite_path)
 c = conn.cursor()
 t = False
 
+print ("Подключение к серверу...\n< Успешно >\n")
+print ("Запуск бота...\n< Успешно >\n\nЛоги:\n")
 
 def get_user(user_id):
     cmd = "SELECT * FROM users WHERE user_id=%d" % user_id
@@ -26,18 +29,21 @@ def get_user(user_id):
             user_id=result[0],
             state=result[1],
             last_exercise_id=result[2],
+            score=result[3],
             exist=True
         )
 
     return result_arr
 
 
-def send_message_VK(event, message):
+def send_message_VK(event, message, keyboard=keyboard.default):
     vk.messages.send(  # Отправляем сообщение
         user_id=event.user_id,
         message=message,
+        keyboard=keyboard,
         random_id=random.randint(-1000000000, 1000000000)
     )
+
     print_str = "— {}".format(message)
     print(print_str)
 
@@ -56,7 +62,7 @@ def get_user_VK(event):
 
 
 def register_new_user(user_id):
-    cmd = "INSERT INTO users(user_id, state) VALUES (%d, 'none')" % user_id
+    cmd = "INSERT INTO users(user_id, state, last_exercise_id, score) VALUES (%d, 'none', 1, 0)" % user_id
     c.execute(cmd)
     conn.commit()
 
@@ -88,7 +94,6 @@ def get_exercise(exercise_id):
 
     return result_arr
 
-
 def generate_exercise():
     cmd = "SELECT COUNT(*) FROM exercises"
     c.execute(cmd)
@@ -109,6 +114,27 @@ def generate_exercise():
 
     return result_arr
 
+def send_exercise(event):
+    set_user_state(event.user_id, "biotop_exercise")
+    exercise = generate_exercise()
+    msg = "Вопрос: {}".format(exercise["question"])
+
+    questions = [exercise["answer_one"], exercise["answer_two"], exercise["answer_three"], exercise["answer_true"]]
+    random.shuffle(questions)
+    keyboard_exercise = keyboard.exercise % (questions[0], questions[1], questions[2], questions[3])
+    send_message_VK(event, msg, keyboard=keyboard_exercise)
+
+    set_user_last_exercise_id(event.user_id, exercise["exercise_id"])
+
+def score_controller(user_id, score):
+    score_old = get_user(user_id)["score"]
+    score_new = score_old + score
+
+    cmd = "UPDATE users SET score = '{}' WHERE user_id = {}".format(score_new, user_id)
+    c.execute(cmd)
+    conn.commit()
+
+    return score_new
 
 while True:
     for event in longPoll.listen():
@@ -121,32 +147,22 @@ while True:
                 register_new_user(user_id=event.user_id)
 
             if event.text.lower() == "биотоп" and get_user(event.user_id)["state"] == "none":
-                send_message_VK(event, "Хочешь БИОТОП?")
+                send_message_VK(event, "Хочешь участвовать в БИОТОПЕ?", keyboard=keyboard.biotop)
                 set_user_state(event.user_id, "biotop_wait")
 
             if get_user(event.user_id)["state"] == "biotop_wait":
                 msg = event.text.lower()
-                used = False
 
-                if msg == "да" and not used:
-                    send_message_VK(event, "Кайф! Лови")
-                    set_user_state(event.user_id, "biotop_exercise")
-                    exercise = generate_exercise()
-                    msg = "Вот вопрось: {}. варианты: {}, {}, {}, {}".format(exercise["question"],
-                                                                             exercise["answer_one"],
-                                                                             exercise["answer_two"],
-                                                                             exercise["answer_three"],
-                                                                             exercise["answer_true"])
-                    send_message_VK(event, msg)
-                    set_user_last_exercise_id(event.user_id, exercise["exercise_id"])
-                    used = True
-                elif msg == "нет" and not used:
-                    send_message_VK(event, "Окей. Ты возвращен обратно")
+                if msg == "да, начать биотоп!":
+                    send_message_VK(event, "Окей, тогда начинаем. За правильные ответы на вопросы ты получаешь очки и "
+                                           "можешь участвовать в топе. Удачи!")
+                    send_exercise(event)
+                elif msg == "отмена":
+                    send_message_VK(event, "Вы вышли из БИОТОПА")
                     set_user_state(event.user_id, "none")
-                    used = True
-                elif msg != "да" and not used:
-                    send_message_VK(event, "Напиши ДА для продолжения или НЕТ для отмены.")
-                    used = True
+                elif msg != "биотоп":
+                    send_message_VK(event, """⛔ Выбери один из перечисленных вариантов: "Да, начать БИОТОП!" или "Отмена" """, keyboard=keyboard.biotop)
+
 
             if get_user(event.user_id)["state"] == "biotop_exercise":
                 msg = event.text.lower()
@@ -161,26 +177,26 @@ while True:
                 )
 
                 if msg == exercise["ans_true"]:
-                    send_message_VK(event, "кайф получи 10 баллов")
+                    score_new = score_controller(event.user_id, 5)
+                    send_message_VK(event, "Отлично! Ты заработал 5 баллов\nТвой счет: {}".format(score_new))
                     set_user_state(event.user_id, "biotop_exercise_new")
                 elif msg == exercise["ans_1"] or msg == exercise["ans_2"] or msg == exercise["ans_3"]:
-                    send_message_VK(event, "сорян, неправильно")
+                    score_new = score_controller(event.user_id, -2)
+                    send_message_VK(event, "Упс! Неправильно. Ты потерял 2 балла\nТвой счет: {}".format(score_new))
                     set_user_state(event.user_id, "biotop_exercise_new")
-                else:
+                elif msg != "да, начать биотоп!":
                     send_message_VK(event, "выбери вариант ало")
 
             if get_user(event.user_id)["state"] == "biotop_exercise_new":
                 msg = event.text.lower()
 
-                send_message_VK(event, "Пиши ок чтобы продолжить или отмена")
+                if msg == "продолжить":
+                    send_exercise(event)
 
-                if msg == "ок":
-                    set_user_state(event.user_id, "biotop_exercise")
-                    exercise = generate_exercise()
-                    msg = "Вот вопрось: {}. варианты: {}, {}, {}, {}".format(exercise["question"],
-                                                                             exercise["answer_one"],
-                                                                             exercise["answer_two"],
-                                                                             exercise["answer_three"],
-                                                                             exercise["answer_true"])
-                    send_message_VK(event, msg)
-                    set_user_last_exercise_id(event.user_id, exercise["exercise_id"])
+                elif msg == "отмена":
+                    score_usr = get_user(event.user_id)["score"]
+                    send_message_VK(event, "Твой БИОТОП завершен!\nТвой счет: {}".format(score_usr))
+                    set_user_state(event.user_id, "none")
+
+                else:
+                    send_message_VK(event, "Пиши ок чтобы продолжить или отмена", keyboard.next)
