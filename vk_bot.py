@@ -122,10 +122,10 @@ def generate_exercise():
 def send_exercise(event):
     set_user_state(event.user_id, "biotop_exercise")
     exercise = generate_exercise()
-    msg = "Вопрос: {}".format(exercise["question"])
-
     questions = [exercise["answer_one"], exercise["answer_two"], exercise["answer_three"], exercise["answer_true"]]
     random.shuffle(questions)
+
+    msg = "Вопрос: {}\n\nВарианты ответа:\n[A] {}\n[B] {}\n[C] {}\n[D] {}".format(exercise["question"], questions[0], questions[1], questions[2], questions[3])
     keyboard_exercise = keyboard.exercise % (questions[0], questions[1], questions[2], questions[3])
     send_message_VK(event, msg, keyboard=keyboard_exercise)
 
